@@ -82,6 +82,18 @@ LoRaWAN provides public and private network deployment options.
 > * Eavesdropping: Lack of integrity checks between network and application servers.
 > * ACK spoofing: Attackers can disrupt device communication.
 
+***Security measures:***
+
+- Three distinct 128-bit AES keys:
+    - The application key AppKey is only known by the device and by the application. When a device joins the network (this is called a join or activation)
+    - an application session key AppSKey and;
+    - a network session key NwkSKey are generated.
+    
+    The NwkSKey is shared with the network, while the AppSKey is kept private.
+    
+
+This is how we protect the data in transit.
+
 #### LoRaWAN Performance & Limitations
 * Coverage: Up to 15 km in rural areas, 2–5 km in urban environments.
 * Interference: Affected by other LPWAN technologies like Sigfox, NB-IoT.
@@ -155,6 +167,7 @@ LoRaWAN abstracts the PHY data rates of LoRa - for EU / CN:
 ![alt text](images/lorawan-datarates.png)
 
 ### Duty cycles
+> Duty cycle is the percentage of time a device is actively transmitting versus its total cycle time.
 >LoRaWAN implements duty cycle rules made by regulators.
 On top of that, specific networks might have fairplay rules.
 

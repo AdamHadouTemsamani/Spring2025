@@ -112,7 +112,7 @@ requirements (ASRs)
 > **Context**: ‘‘a system’s […] context, determines the setting and circumstances of developmental, operational, political, and other influences upon that system’’
 >* Characteristics or goals of the organization (e.g., always use C#)
 
-In this course:
+In this course ASR consist of:
 > **Context diagrams**: Describe the setting of the system in terms of subsystems, integrated systems, and actors.
 >
 > Informal context diagram: For non-technical audience.

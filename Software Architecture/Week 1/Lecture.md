@@ -10,16 +10,18 @@ It involves:
 * Over long period of time
 
 ### Discussion about the system functionality
-> Functionality: 
+> **Functionality**: 
 > * Functional aspect.
 > * Decribes *What*
 > 
-> System qualities (Non functional aspect, this is not a good term)
+> **System qualities** (Non functional aspect, this is not a good term)
 > * Describes *How*
 
 ![alt text](images/functionality-systemsqualities.png)
 
 ### Design approaches
+
+#### Architectural Seperation of Concerns (ASC/ARES)
 ![alt text](images/design-approach.png)
 > **Architectural concerns**
 > System requirements and mandated design decisions. 

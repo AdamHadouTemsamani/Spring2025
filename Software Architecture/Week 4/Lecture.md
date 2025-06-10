@@ -15,6 +15,19 @@ We destinguish between detailed software design and software architecture (archi
   1. Software architecture is concerned with describing the overall structure of systems
   2. Software design is concerned with describing each component in such a detail that it may be constructed
 
+They introduce the terms:
+1. Design model = abstractions for reasoning about certain structural asepcts of software
+2. Specification = the set of formal languages of any order (programming langauges/specification languages)
+3. Intensionality vs. Extensionality (infinite instances vs specifical instance/implementation)
+4. Non-local (all parts of system vs. local)
+
+### Intensionality-Locality Thesis
+
+| Architecture   | Intensional | Non-local |
+| Design         | Intensional | Local     |
+| Implementation | Extensional | Local     |
+
+
 ![alt text](images/continuum.png)
 
 ### 1. Design Models

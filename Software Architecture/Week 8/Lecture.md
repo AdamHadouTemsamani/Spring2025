@@ -52,6 +52,16 @@ anticipate changes.
 > * **Relations**: Depends on, used by, deployed on, developed by.
 > * **Models**: Software architecture description.
 
+---
+
+**Organizational structures** describe who does what and how teams, projects, and stakeholders relate and collaborate.
+
+**Business structures** outline how products, services, partners, and customers connect to create and capture value.
+
+**Software structures** map out how modules, services, and components depend on and interact with each other in the system.
+
+---
+
 ![alt text](images/ecosystem-analysis.png)
 
 ## Software ecosystem health

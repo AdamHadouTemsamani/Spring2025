@@ -23,9 +23,14 @@ They introduce the terms:
 
 ### Intensionality-Locality Thesis
 
-| Architecture   | Intensional | Non-local |
-| Design         | Intensional | Local     |
-| Implementation | Extensional | Local     |
+<table>
+  <tr><td>Architecture</td><td>Intensional</td><td>Non-local</td></tr>
+  <tr><td colspan="3"><hr></td></tr>
+  <tr><td>Design</td><td>Intensional</td><td>Local</td></tr>
+  <tr><td colspan="3"><hr></td></tr>
+  <tr><td>Implementation</td><td>Extensional</td><td>Local</td></tr>
+</table>
+
 
 
 ![alt text](images/continuum.png)

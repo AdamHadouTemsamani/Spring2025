@@ -25,9 +25,7 @@ They introduce the terms:
 
 <table>
   <tr><td>Architecture</td><td>Intensional</td><td>Non-local</td></tr>
-  <tr><td colspan="3"><hr></td></tr>
   <tr><td>Design</td><td>Intensional</td><td>Local</td></tr>
-  <tr><td colspan="3"><hr></td></tr>
   <tr><td>Implementation</td><td>Extensional</td><td>Local</td></tr>
 </table>
 

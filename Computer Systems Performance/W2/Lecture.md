@@ -198,4 +198,30 @@ If you mus tprovide strict latency guarantees
 
 ![alt text](images/cpuevolution.png)
 
+## Scalability as a metric
 
+Scalability has many different dimensions: should be **defined** *well*.
+* May mean different things to different people
+  * Just like *throughput* as a metric
+
+Examples:
+* scalability with respect to dataset size
+* scalability with respect to number of cores being used
+* scalability with respect to number of servers being used
+
+---
+
+sub-scalar: improves less than expected (than ideal)
+super-scalar: improves more than expecteed ((than ideal))
+
+![alt text](images/scalability1.png)
+![alt text](images/scalability2.png)
+
+### Performance Analysis
+
+![alt text](images/pa.png)
+
+
+### Useful Commands
+
+![alt text](images/commands.png)

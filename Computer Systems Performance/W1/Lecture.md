@@ -44,7 +44,7 @@
 > **Note: in practice, a continuous process with all these steps!**
 
 ## Designing experiments / Experimental methodology
-![](image.png)
+![](images/image.png)
 
 1. Design a **goal**. 
    1. What is your scientific goal?
@@ -94,7 +94,7 @@ What are the sizes of memory to use?
 >* For cores there are 5 levels like, 1, 2, 4, 6, 8
 >* For memory there could be 3 levels: 1GB, 10GB, 100GB
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 ### Workloads
 > Request made by the users of the system
@@ -108,9 +108,9 @@ What are the sizes of memory to use?
 > * Workload could be: **Operating system** or **Database system**
 
 > If system = deep learning framework
-> * Workload could be: **sentiment analysis** or **image classification**
+> * Workload could be: **sentiment analysis** or **images/image classification**
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 ### Metric
 > Criteria used to evaluate the performance of the system
@@ -123,7 +123,7 @@ What are the sizes of memory to use?
 > What is the **CPU utilization** in % of the cores being used?
 > Ease of use, **cache misses**, **security**, **clock cycles**
 
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 
 ### Experiment
 > A procedure undertaken to 
@@ -143,7 +143,7 @@ What are the sizes of memory to use?
 >* statistics would help you here
 >* in practice, **do not run it just once** & make sure standard deviation is low across different runs! if not, you have an error to fix or a phenomenon to understand!
 
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
 ## Parameter with the most impact?
 > Often more than one factor/parameter has effect e.g., number of CPU cores, network connection speed, etc. how to determine which one has biggest impact?
@@ -154,12 +154,12 @@ What are the sizes of memory to use?
 >* should be combined with repetitions
 
 > Example:
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 
 ## Performance modeling
 > Non-linear regression for performance (just a model!)
 > $throughput = q_0 + q_Ax_A + q_Bx_B + q_{AB}x_Ax_B$
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 
 * can use further statistics to understand
 * the impact of a parameter on throughput

@@ -15,7 +15,7 @@ parallelism (ideally all types of it) & its implications!
 > * Multicore CPUs
 > * Multisocket multicore CPUs
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 ## Moore’s law
 > “… the observation that the number of transistors in a dense integrated circuit doubles approximately every two years.”
@@ -31,7 +31,7 @@ parallelism (ideally all types of it) & its implications!
 ## Types of hardware parallelism
 >Multithreading threads share execution cycles on the same core
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 
 > Why do we need this?
@@ -48,7 +48,7 @@ parallelism (ideally all types of it) & its implications!
 >* **Core $\rarr$ Persistent storage (hard disk, ssd)**: ~5ms
 >* **Core $\rarr$ Archival storage (tape)**: ~100 sec
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 > In practice: Stalls = sleep
 > * **Core $\rarr$ L1**: Almost no penalty
@@ -72,14 +72,14 @@ parallelism (ideally all types of it) & its implications!
 > **Distributed systems**
 > * running a program over multiple machines
 
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 
 ## Implicit parallelism
 > Only one instruction can be executed at a time.
 
 ### Exmaple of NO implicit parallelism
 > Several **clock cycles** to complete two instructions,assuming no long-latency data/memory accesses
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
 ### RISC instruction stages
 > **fetch**: the instruction from the cache
@@ -88,7 +88,7 @@ parallelism (ideally all types of it) & its implications!
 > **memory**: accessing the memory for inputs if needed
 > **write**: writing back the results into registers
 
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 
 ### Example of implicit parallelism
 > **Instruction pipelining** is the fundamental way to parallelize implicitly.
@@ -98,24 +98,24 @@ parallelism (ideally all types of it) & its implications!
 > Overlapping stages of different instructions.
 >
 > 
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 
 ### Superscalar CPU
 > issuing multiple instructions in a cycle
 
-![alt text](image-7.png)
+![alt text](images/image-7.png)
 
 ### Out-of-order (OoO) execution
 > allows a processor to execute instructions based on the availability of input data rather than strictly following the instruction ordering of a program
 
-![alt text](image-8.png)
+![alt text](images/image-8.png)
 
 ### Single instruction single data (SISD)
-![alt text](image-10.png)
+![alt text](images/image-10.png)
 ### Single instruction multiple data (SIMD)
 > also implicit data parallelism, but this one has to be managed/issued by the software
 
-![alt text](image-11.png)
+![alt text](images/image-11.png)
 
 ### Simultaneous multithreading (SMT)
 > Today, also known as hyperthreading.
@@ -123,7 +123,7 @@ parallelism (ideally all types of it) & its implications!
 >* Each CPU cycle, the threads are swapped 
 >* OS don’t have to do a context switch for this
 
-![alt text](image-12.png)
+![alt text](images/image-12.png)
 > This is a core that supports two hardware contexts (or logical threads)
 > 
 > **Trade-off**: How to use the transistors in a core?
@@ -134,17 +134,17 @@ parallelism (ideally all types of it) & its implications!
 
 ### Memory stalls in data-intensive apps
 > Data-intensive apps are known to suffer due to memory stalls
-![alt text](image-13.png)
+![alt text](images/image-13.png)
 
 ## Explicit parallelism
 ### Scaling-up vs Scaling-out
 > **Scaling-up**: adding more cores in a single server should give proportional performance increase.
 > **Scaling-out**: adding more servers in a data center should give proportional performance increase
 
-![alt text](image-14.png)
+![alt text](images/image-14.png)
 
 ### Scaling-up
-![alt text](image-15.png)
+![alt text](images/image-15.png)
  
 > need better metrics to reason about scalability, throughput measurements are not enough.
 
@@ -164,13 +164,13 @@ parallelism (ideally all types of it) & its implications!
 >* Predictable behavior, less contention.
 >* This method is more efficient and safe.
 
-![alt text](image-16.png)
+![alt text](images/image-16.png)
 
 > **Key point**: Better synchronization and critical section handling leads to more predictable and stable system performance.
 
 #### Critical sections as a metric? 
 
-![alt text](image-17.png)
+![alt text](images/image-17.png)
 
 > unbounded communication will hit you eventually with NUMA even fixed/cooperative have issues
 
@@ -178,7 +178,7 @@ parallelism (ideally all types of it) & its implications!
 > **Threads in core**: <10 cycles
 > **Threads between cores in one CPU**: ~50 cycles
 > **Threads accorss core between two CPUs**: 500 cycles
-![alt text](image-18.png)
+![alt text](images/image-18.png)
 
 ### Some tips for scaling up 
 > * high throughput != scalable
@@ -194,22 +194,22 @@ parallelism (ideally all types of it) & its implications!
 
 > The smaller a transistor is the harder & more expensive to get it right.
 
-![alt text](image-19.png)
+![alt text](images/image-19.png)
 
 ### What this means (for servers)
 > more parallelism & heterogeneity most software systems are not ready for either
 
-![alt text](image-20.png)
+![alt text](images/image-20.png)
 
 ### Lighter cores (e.g., ARM)
 > not feasible for latency critical tasks and can be less energy-efficient in the long run
 
-![alt text](image-21.png)
+![alt text](images/image-21.png)
 
 ### Diverse cores (e.g., CPU, GPU, FPGA, ASIC)
 > Better long-term solution, but creates mess
 
-![alt text](image-22.png)
+![alt text](images/image-22.png)
 
 ### Leveraging diversity/heterogeneity
 > Finer-grained scheduling & energy management
@@ -222,4 +222,4 @@ parallelism (ideally all types of it) & its implications!
 >* must pick frequent & important tasks to accelerate – otherwise, no economic viability
 
 ### Today’s landscape
-![alt text](image-23.png)
+![alt text](images/image-23.png)

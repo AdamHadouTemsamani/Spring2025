@@ -88,4 +88,102 @@ int main(void) {
 
 * **Grid**: Contains several Thread Blocks
 
+![alt text](images/index.png)
 
+`threadIdx.x` → position inside the block (0–7)
+
+`blockIdx.x` → which block this is (0–3)
+
+`blockDim.x` → number of threads per block (8 here)
+
+This indexing allows each thread to process a unique element in arrays A, B, and C.
+
+This lets 32 threads compute one value in the array.
+
+### Submiting a task in CUDA 
+
+![alt text](images/submit.png)
+
+### Shared Memory
+
+![alt text](images/sharedmemory.png)
+
+A Streaming Multiprocessor (SM) is a core processing unit on the GPU.
+
+**Shared memory** is a small, fast memory space by all thrads in a block.
+* Significantly faster than global memory
+SMEM enables threads within a block to share data which can lad to substantial performance improvmeent by:
+*  **Reducing Redundant Memory Accesses**
+   *  If multiple threads need the same data, they cn share it in shared memory instead of each thread detching it seperately from global memory. 
+* **Minizing GLobal Memory Latency**
+  * Global memory access is slow compared to shared memory. Using shared memory avoids repeatedly access global memory for frequently used data. 
+* **Enabling Thread Collbaoration**
+  * THreads ca share intermediate results via shared memory, making it easier to implement cooperative algorithms.
+
+### Example (Maxmimum)
+
+![alt text](images/maximum.png)
+
+### Example (Computing dot product using CUDA)
+
+```c++
+
+// Kernel to compute dot product using shared memory
+__global__ void dotProductSharedMemory(const float *a, const float *b, float *result, int n) {
+    __shared__ float partialSum[BLOCK_SIZE];  // Shared memory for block-wise partial sums
+
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;  // Global index
+    int tx = threadIdx.x;                            // Local thread index within the block
+
+    // Compute partial dot product
+    if (idx < n) {
+        partialSum[tx] = a[idx] * b[idx];
+    } else {
+        partialSum[tx] = 0.0f;  // Handle out-of-bounds threads
+    }
+
+    __syncthreads();  // Synchronize threads in the block
+
+    // Perform reduction within shared memory
+    for (int stride = blockDim.x / 2; stride > 0; stride /= 2) {
+        if (tx < stride) {
+            partialSum[tx] += partialSum[tx + stride];
+        }
+        __syncthreads();  // Synchronize threads after each reduction step
+    }
+
+    // Write the block's partial sum to global memory
+    if (tx == 0) {
+        atomicAdd(result, partialSum[0]);  // Atomic operation to safely accumulate the result
+    }
+
+We want to compute: 
+
+```c++
+
+dot = a[0]*b[0] + a[1]*b[1] + ... + a[n-1]*b[n-1]
+
+```
+
+* Each block uses shared memory to accumulate its portion of the dot product. 
+* Each Thread Computes One Term of the Dot Product
+* It also performs parallel reduction, where we iteratively sum parias of values and reduce all partial results into `partialSum[0]`.
+  * Instead of thread summing everything, all thrads sum in parallel, which cuts down the time to `log₂(BLOCK_SIZE)` 
+* Only thread `0`writes the block's total to the final `result` array. (atomicAdd ensures thread-safety)
+* 
+
+### Example (Dot product without shared memory)
+
+```c++
+
+__global__ void dotProductGlobalMemory(const float *a, const float *b, float *result, int n) {
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (idx < n) {
+        float product = a[idx] * b[idx];
+        atomicAdd(result, product);  // Directly write to global result
+    }
+}
+
+
+```

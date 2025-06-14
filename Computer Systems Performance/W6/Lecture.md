@@ -192,7 +192,7 @@ hardware acceleration …
 - NVIDIA dominates server market followed by AMD
 - your personal devices have a form of integrated GPUs (e.g., to accelerate graphics or AI in personal computers)
 
-### Single Instruction Multiple Data (SIMD
+### Single Instruction Multiple Data (SIMD)
 
 ![image.png](attachment:99a66562-6053-4efa-b4da-6bde60292a56:image.png)
 

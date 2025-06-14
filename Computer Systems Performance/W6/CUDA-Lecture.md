@@ -112,13 +112,13 @@ A Streaming Multiprocessor (SM) is a core processing unit on the GPU.
 
 **Shared memory** is a small, fast memory space by all thrads in a block.
 * Significantly faster than global memory
-SMEM enables threads within a block to share data which can lad to substantial performance improvmeent by:
+SMEM enables threads within a block to share data which can lead to substantial performance improvmeent by:
 *  **Reducing Redundant Memory Accesses**
    *  If multiple threads need the same data, they cn share it in shared memory instead of each thread detching it seperately from global memory. 
 * **Minizing GLobal Memory Latency**
   * Global memory access is slow compared to shared memory. Using shared memory avoids repeatedly access global memory for frequently used data. 
 * **Enabling Thread Collbaoration**
-  * THreads ca share intermediate results via shared memory, making it easier to implement cooperative algorithms.
+  * THreads can  share intermediate results via shared memory, making it easier to implement cooperative algorithms.
 
 ### Example (Maxmimum)
 

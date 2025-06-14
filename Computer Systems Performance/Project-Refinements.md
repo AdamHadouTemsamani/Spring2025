@@ -10,6 +10,6 @@
 * Describe whether the datasets fit in memory or not, is it uniform or not (what assumptions have we made)
 * Do we include the units of our axis
 * For project 2, we could discuss if using Core affinity or NUMA affinity settings could change the results, in terms of locality and latency optimizations. 
-
+* Should have had standard deviation
 
   

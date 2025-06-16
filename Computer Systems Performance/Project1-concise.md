@@ -1,5 +1,44 @@
 # Project 1
+
+## What to talk about
+* Graphs => How to preset results.
+* We want to partition $2^{24}$ (16 million) tuples. 
+* Hashbit amount determine number of partitions.
+### Independent output
+* Tuples are split to threads.
+* Each thread has own private partition buffer (huge).
+* Cache line = 64B. Tuple = 16B. 4 tuples / per cache line
+  * Would be nice if we know how many tuples fit in L1, L2, and L3.
+* Cache misses.
+* **Use more memory**
+  * Threads independent parition size are the same as the original.
+  * >If we have 16 B size with 16 threads, each thread does not have a buffer of size 1/16 B. They all have private buffer sizes of 16 B.
+  * Each thread should be able to have all partitions.
+  * **Thread A might get all partitions.**
+  * More pressure on L3 cache.
+    * Scales with number of threads.
+  * What happens if one thread gets partitions?
+
+### Concurrent output
+* **Less memory**
+  * We have the same amount of buffers.
+  * Less pressure on L3 cache.
+    * Does not scale with the number of threads.
+  * All threads needs to 
+  * Worst case, all threads needs all partions in their cache.
+* High lock contension at **low hashbits**.
+  * => **cache invalidations** 
+  * Thread A writes to a **cache line**, making other Threads that use this cache line to be **invalid**.
+  * Next time Thread B see its cache line is invalid, causing a cache miss.
+* **High hashbits** => 
+  * Low lock contension
+  * Does not hit same partition
+  * **Not** Fragmentation, but TLB miss
+    * => More page walks.
+
+
 ## Partitioning Techniques
+
 ### Independent Output
 * Each thread has a **private buffer** per partition (N × P buffers).
 * No synchronization: threads write only to their own buffers.

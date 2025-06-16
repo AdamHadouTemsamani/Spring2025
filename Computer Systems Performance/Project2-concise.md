@@ -1,4 +1,17 @@
 # Project 2
+## What to talk about
+* Goal: add we use thread pools.
+* Thread pool overhead > sorting
+
+### C++ and Rust
+* **Low input size**:
+  * Minimal gain from parallelism.
+  * Overhead of synchonizatioon outweight the benefit of parallelism 
+    * $creation \;and\; management > execution$.
+  * **Larger input size**:
+    * Workload per thread is large enough for the thread overhead and efficient thread pool usage.
+  * Plateau input size no longer leads to gain in performance.
+
 ## Main Findings
 ### Performance Overview
 * **C++ (TBB)**: Minimal gains at small sizes (e.g. 2¹² elements ≈1 MiPS). Throughput improved with threads and input size: plateaued around 17 MiPS with 32 threads. Overhead from spawning 2 tasks per split.

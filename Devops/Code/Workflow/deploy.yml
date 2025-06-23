@@ -1,0 +1,152 @@
+name: Deploy
+
+on:
+  # Trigger this workflow after the "Build and Test" workflow completes
+  workflow_run:
+    workflows: ["Build and Test"]  # Must match the name of the build workflow
+    types:
+      - completed
+
+jobs:
+  deploy:
+    name: Deploy to DigitalOcean
+    # Conditions to ensure deploy runs only for successful pushes to main
+    if: >
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.event == 'push' &&
+         github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-24.04
+
+    steps:
+      # 1. Check out the repository at the latest commit
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Authenticate to Docker Hub to allow image push
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}  # stored in repo secrets
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 3. Set up Docker Buildx for advanced builds and caching
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 4. List key files for debugging; verify paths exist
+      - name: Debug - List repository contents
+        run: |
+          echo "=== Repository Structure ==="
+          find . -type f -name "deploy.sh" -o -name "docker-compose.yml" | sort
+          echo ""
+          echo "=== Content of MiniTwitSolution/remote_files directory ==="
+          ls -la MiniTwitSolution/remote_files || echo "Directory not found"
+
+      # 5. Build & push the database migrator image
+      - name: Build & Push Migrator
+        uses: docker/build-push-action@v6
+        with:
+          context: ./MiniTwitSolution
+          file: ./MiniTwitSolution/MiniTwit.Api/Dockerfile.migrator
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/minitwit-migrator:latest
+          # Pull existing cache layers from Docker Hub (speeds up rebuilds)
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/minitwit-migrator:buildcache
+          # Push updated cache back to Docker Hub (mode=max saves full metadata)
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/minitwit-migrator:buildcache,mode=max
+
+      # 6. Build & push the API image
+      - name: Build & Push API
+        uses: docker/build-push-action@v6
+        with:
+          context: ./MiniTwitSolution
+          file: ./MiniTwitSolution/MiniTwit.Api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/minitwit-api:latest
+          # reuse cache layers from previous API build
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/minitwit-api:buildcache
+          # update cache image with new layers and metadata
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/minitwit-api:buildcache,mode=max
+
+      # 7. Build & push the client image
+      - name: Build & Push Client
+        uses: docker/build-push-action@v6
+        with:
+          context: ./MiniTwitSolution
+          file: ./MiniTwitSolution/MiniTwit.Client/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/minitwit-client:latest
+          # speed up client builds by pulling prior cache
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/minitwit-client:buildcache
+          # push updated client cache for future builds
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/minitwit-client:buildcache,mode=max
+
+      # 8. Prepare SSH key for connecting to DigitalOcean droplets
+      - name: Configure SSH for deployment
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/do_ssh_key
+          chmod 600 ~/.ssh/do_ssh_key
+
+      # 9. Copy migratuib compose file to API server
+      - name: Copy migration docker-compose.yml to api
+        run: |
+          scp -v -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            ./MiniTwitSolution/remote_files/migrator/docker-compose.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.API_IP }}:~/migrator/docker-compose.yml
+
+      # 10. Copy migration script to API server
+      - name: Copy migration script to server
+        run: |
+          scp -v -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            ./MiniTwitSolution/remote_files/migrator/doMigration.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.API_IP }}:~/migrator/doMigration.sh
+
+      # 11. Run the migration on the API droplet
+      - name: Run Migration on API Droplet
+        run: |
+          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.API_IP }} \
+            -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            'cd ~/migrator && bash -x doMigration.sh'
+
+      # 12. Copy deployment script and compose file to API droplet
+      - name: Copy deployment script to api
+        run: |
+          scp -v -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            ./MiniTwitSolution/remote_files/api-swarm/deploy.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.API_IP }}:~/minitwit/deploy.sh
+      - name: Copy docker-compose.yml to api
+        run: |
+          scp -v -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            ./MiniTwitSolution/remote_files/api-swarm/docker-compose.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.API_IP }}:~/minitwit/docker-compose.yml
+
+      # 13. Execute deploy on API droplet, with error handling
+      - name: Deploy to api
+        run: |
+          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.API_IP }} \
+            -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            'cd ~/minitwit && chmod +x deploy.sh && bash -x deploy.sh || { echo "DEPLOYMENT FAILED WITH ERROR $?"; cat deploy.sh; }'
+
+      # 14. Copy client deploy artifacts and execute on client droplet
+      - name: Copy deployment script to client
+        run: |
+          scp -v -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            ./MiniTwitSolution/remote_files/client/deploy.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.CLIENT_IP }}:~/minitwit/deploy.sh
+      - name: Copy docker-compose.yml to client
+        run: |
+          scp -v -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            ./MiniTwitSolution/remote_files/client/docker-compose.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.CLIENT_IP }}:~/minitwit/docker-compose.yml
+      - name: Deploy to client
+        run: |
+          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.CLIENT_IP }} \
+            -i ~/.ssh/do_ssh_key -o StrictHostKeyChecking=no \
+            'cd ~/minitwit && chmod +x deploy.sh && bash -x deploy.sh || { echo "DEPLOYMENT FAILED WITH ERROR $?"; cat deploy.sh; }'
+
+# Cache layers are the intermediate filesystem snapshots Docker creates for each instruction in your Dockerfile. 
+# When you rebuild, Docker reuses any layers whose inputs (base image + instruction + context) haven’t changed—so you only rebuild the layers that did change, 
+# saving time and resources.
+
+# This only seems to deploy client/api. 

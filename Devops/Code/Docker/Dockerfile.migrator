@@ -1,0 +1,51 @@
+# --------------------------------------------
+# Build stage: generate a self-contained EF Core Migrations bundle
+# --------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src                                      # Set working directory in the build container
+
+# Install the EF Core CLI tool globally so we can scaffold/run migrations
+RUN dotnet tool install --global dotnet-ef        
+
+# Ensure the installed global tools (including dotnet-ef) are on the PATH
+ENV PATH="${PATH}:/root/.dotnet/tools"            
+
+# Copy your entire repo into the container (adjust if you want only specific project folders)
+COPY . .                                         
+
+# Switch into the API project folder where your migrations live
+WORKDIR /src/MiniTwit.Api                         
+
+# Restore NuGet packages, then bundle all EF Core migrations into a single self-contained binary
+RUN dotnet restore && \
+    dotnet ef migrations bundle \
+      --project MiniTwit.Api.csproj               # The project that defines your DbContext
+      --startup-project MiniTwit.Api.csproj       # The project to use as the entry point
+      --self-contained -r linux-x64               # Produce a Linux x64 native executable 
+      -o ef-migrations-bundle                     # Output folder for the bundle
+
+# --------------------------------------------
+# Runtime stage: lightweight image with only what's needed to run migrations
+# --------------------------------------------
+FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
+WORKDIR /app                                      # Working directory for the runtime container
+
+# Install bash (for our script) and dos2unix (to fix Windows line endings)
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y dos2unix=7.4.3-1 && \
+    rm -rf /var/lib/apt/lists/*                   # Clean up apt cache to keep image small
+
+# Copy the compiled EF migrations bundle and appsettings over from the build stage
+COPY --from=build /src/MiniTwit.Api/ef-migrations-bundle ./  
+COPY --from=build /src/MiniTwit.Api/appsettings.json ./       
+
+# Make the migrations bundle executable
+RUN chmod +x ./ef-migrations-bundle                
+
+# Copy our migration-runner shell script, convert any CRLF line endings, and make it executable
+COPY MiniTwit.Api/migrate.sh ./                    
+RUN dos2unix ./migrate.sh && \
+    chmod +x ./migrate.sh                          
+
+# When this container runs, execute the migration script (which in turn runs the bundle)
+ENTRYPOINT ["bash", "./migrate.sh"]                 

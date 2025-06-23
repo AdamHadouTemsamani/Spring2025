@@ -1,0 +1,41 @@
+# Use the official ASP.NET Core runtime image as a base (lightweight, no SDK).
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+WORKDIR /app                # Set working directory for runtime container
+EXPOSE 80                   # Expose HTTP port
+EXPOSE 443                  # Expose HTTPS port
+
+# Use the full .NET SDK image for building the application.
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src                # Working directory for build operations
+
+# Copy only the project file(s) and restore dependencies (enables layer caching).
+COPY ["MiniTwit.Api/MiniTwit.Api.csproj", "MiniTwit.Api/"]
+RUN dotnet restore "MiniTwit.Api/MiniTwit.Api.csproj"   # Restore NuGet packages
+
+# Copy the rest of the source code to the container.
+COPY . .                   # Copy all source files into the build context
+WORKDIR /src/MiniTwit.Api   # Switch into the API project folder
+RUN dotnet build "MiniTwit.Api.csproj" -c Release -o /app/build   # Compile in Release mode
+
+# Publish the application to a folder (self-contained deployment ready to run).
+FROM build AS publish
+RUN dotnet publish "MiniTwit.Api.csproj" \
+    -c Release \         # Publish in Release configuration
+    -o /app/publish \     # Output directory inside build image
+    /p:UseAppHost=false    # Disable platform-specific native host generation
+
+# Final stage: create a minimal runtime image containing only the app.
+FROM base AS final
+WORKDIR /app               # Set working directory for final container
+COPY --from=publish /app/publish .  # Copy published output from publish stage
+
+# Set the entry point to run the application.
+ENTRYPOINT ["dotnet", "MiniTwit.Api.dll"]   # Launch the ASP.NET Core app
+
+# Why split into multiple stages (build, base, final)?
+# - These are not all present in the final image. Docker discards all intermediate images
+#   unless explicitly tagged or used. Only the 'final' stage is used in the container.
+# - Smaller final image: it contains only the runtime and compiled output, not the SDK or source code.
+# - Faster builds: separating the restore step helps cache dependencies and speed up rebuilds.
+# - Better security: removes SDK tools and build artifacts from production image.
+# - Cleaner deployments: final image contains only what's needed to run the app.

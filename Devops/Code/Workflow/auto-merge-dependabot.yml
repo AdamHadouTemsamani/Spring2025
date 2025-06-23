@@ -1,0 +1,33 @@
+# This GitHub Actions workflow automatically approves and enables auto-merge 
+# for pull requests created by Dependabot.
+
+name: Auto Merge Dependabot Updates
+
+# Trigger the workflow only when a pull request is opened
+on:
+  pull_request:
+    types: [opened]
+
+# Set required permissions for the workflow
+permissions:
+  pull-requests: write  # Allow approval and merge of PRs
+  contents: read         # Allow reading repository contents
+
+jobs:
+  auto-merge:
+    # Only run this job if the pull request was opened by the Dependabot bot
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-24.04  # Use the latest Ubuntu runner
+
+    steps:
+      # Step 1: Approve the pull request using GitHub CLI
+      - name: Approve Pull Request
+        run: gh pr review "${{ github.event.pull_request.number }}" --approve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for CLI authentication
+
+      # Step 2: Enable auto-merge on the pull request using GitHub CLI
+      - name: Enable Pull Request Automerge
+        run: gh pr merge --merge --auto "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for CLI authentication

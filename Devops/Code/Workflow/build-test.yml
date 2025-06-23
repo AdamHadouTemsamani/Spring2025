@@ -1,0 +1,72 @@
+# GitHub Actions workflow for building, testing, and checking code coverage of the MiniTwit .NET project
+
+name: Build and Test  # Name of the workflow as shown in the GitHub Actions UI
+
+# Define when the workflow should run
+on:
+  push:
+    branches:
+      - main
+      - master            # Trigger on push to 'main' or 'master' branches
+    paths-ignore:
+      - '*.md'            # Ignore changes to markdown files
+  pull_request:
+    branches:
+      - main              # Trigger on PRs targeting 'main' branch
+    paths-ignore:
+      - '*.md'            # Again, ignore markdown file changes
+  workflow_dispatch:      # Allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    name: Build & Test    # Name of the job
+    runs-on: ubuntu-24.04 # Use Ubuntu 24.04 as the runner OS
+
+    steps:
+      # Step 1: Checkout the repo's code into the runner
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Install .NET 9.0 SDK (including pre-releases)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+          include-prerelease: true
+
+      # Step 3: Restore project dependencies (NuGet packages)
+      - name: Restore dependencies
+        run: dotnet restore MiniTwitSolution/MiniTwitSolution.sln
+
+      # Step 4: Build the solution in Release mode (no restore since already done)
+      - name: Build solution
+        run: dotnet build MiniTwitSolution/MiniTwitSolution.sln --no-restore --configuration Release
+
+      # Step 5: Run unit tests and collect code coverage using XPlat
+      - name: Run tests
+        run: dotnet test MiniTwitSolution/MiniTwitSolution.sln --collect:"XPlat Code Coverage"
+
+      # Step 6: Generate a markdown summary and badge from the code coverage results (insde pull request)
+      - name: Generate Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: MiniTwitSolution/MiniTwit.Test/TestResults/**/coverage.cobertura.xml  # Path to coverage report
+          badge: true                       # Display a badge in the summary
+          fail_below_min: true             # Fail the job if coverage is below threshold
+          format: markdown                 # Output format
+          hide_branch_rate: false          # Show branch coverage
+          hide_complexity: true            # Hide code complexity (not tracked here)
+          indicators: true                 # Add ✓/✗ indicators
+          output: both                     # Output as comment and job summary
+          thresholds: "20 80"              # Min: 20% to pass, ideally above 80%
+
+      # Step 7: Send the code coverage report to Coveralls for tracking/reporting
+      - name: Send coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}  # Auth token for the repo
+          path-to-lcov: "MiniTwitSolution/MiniTwit.Test/TestResults/**/coverage.cobertura.xml"
+
+      # Step 8: Append the markdown coverage report to the GitHub Actions job summary
+      - name: Write Coverage Summary to Job
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY

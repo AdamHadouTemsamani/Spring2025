@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:15-alpine                # Use the lightweight Alpine-based Postgres 15 image
+    container_name: minitwit_db              # Explicit name for easy reference and logs
+    restart: always                          # Always restart if the container stops/crashes
+    environment: # Enviroment Variable
+      POSTGRES_DB: MiniTwitDb                # Name of the default database to create
+      POSTGRES_USER: ${MINITWIT_DB_USER}     # DB username, injected from your .env
+      POSTGRES_PASSWORD: ${MINITWIT_DB_PASSWORD} # DB password, injected from your .env
+    healthcheck:
+      test: ["CMD", "pg_isready",            # Command to check Postgres readiness
+             "-U", "${MINITWIT_DB_USER}",    #   using the provided user
+             "-d", "MiniTwitDb"]             #   against the MiniTwitDb database
+      interval: 5s                           # Run the healthcheck every 5 seconds
+      timeout: 5s                            # Timeout after 5 seconds if no response
+      retries: 5                             # Retry up to 5 times before marking unhealthy
+    ports:
+      - published: 5433 # Host               # Map host port 5433 → container port 5432
+        target: 5432 # Container
+
+  migrator:
+    build:
+      context: .                             # Build from the root of this repo
+      dockerfile: MiniTwit.Api/Dockerfile.migrator  # Use the Dockerfile that runs DB migrations
+    depends_on:
+      db:
+        condition: service_healthy           # Wait until the DB container is healthy
+    environment:
+      ConnectionStrings__DefaultConnection:  # Supply the connection string to the migrator
+        Host=db;Port=5432;Database=MiniTwitDb;
+        Username=${MINITWIT_DB_USER};
+        Password=${MINITWIT_DB_PASSWORD}
+
+  seq:
+    image: datalust/seq:2024.3              # Seq logging server image, version 2024.3
+    container_name: seq                     # Name the container “seq”
+    restart: always                         # Always restart on failure
+    environment:
+      ACCEPT_EULA: "Y"                       # Auto-accept Seq’s license
+    ports:
+      - published: 5341                      # Expose Seq UI on host port 5341
+        target: 80                           # Map to container port 80
+
+  api:
+    build:
+      context: .                             # Build from repo root
+      dockerfile: MiniTwit.Api/Dockerfile    # Use the main API Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development    # Run ASP.NET Core in Development mode
+      ConnectionStrings__DefaultConnection:  # Provide the same DB connection string
+        Host=db;Port=5432;Database=MiniTwitDb;
+        Username=${MINITWIT_DB_USER};
+        Password=${MINITWIT_DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy           # Wait for DB to be healthy
+      seq:
+        condition: service_started           # Ensure Seq is running (no healthcheck)
+        # migrator:
+        #   condition: service_healthy       # (Optional) could wait for migrations to finish
+    ports:
+      - published: 5002                      # Expose API on host port 5002
+        target: 8080                         # Map to container port 8080
+
+  client:
+    build:
+      context: .                             # Build from repo root
+      dockerfile: MiniTwit.Client/Dockerfile # Use the client (frontend) Dockerfile
+    ports:
+      - published: 5001                      # Expose web client on host port 5001
+        target: 80                           # Map to container port 80

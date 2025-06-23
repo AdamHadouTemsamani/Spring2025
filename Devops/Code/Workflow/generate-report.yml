@@ -1,0 +1,52 @@
+# Workflow: Generate Report PDF on Pull Requests to main\ nname: Generate Report PDF
+
+on:
+  pull_request:
+    branches:
+      - main  # Only run when a PR targets the main branch
+
+jobs:
+  build-report:
+    runs-on: ubuntu-24.04  # Ubuntu runner with LaTeX and required tools
+    permissions:
+      contents: write  # Allow pushing the generated PDF back to the repo
+
+    steps:
+      # 1. Check out the pull request's code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Compile LaTeX source to PDF
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: report/main.tex         # Entry point for your LaTeX project
+          extra_system_packages: "inkscape" # Install Inkscape for SVG image support
+          latexmk_shell_escape: true         # Allow shell-escape for external commands
+          work_in_root_file_dir: true        # Run compilation in the directory of main.tex
+
+      # 3. Rename PDF to the build folder
+      - name: Move PDF into build folder
+        run: |
+          mv report/main.pdf report/build/MSc_group_j.pdf  # Rename to desired output path
+
+      # 4. Commit & push the generated PDF back to the PR branch
+      - name: Commit and push
+        run: |
+          # Configure commit author for the action
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+
+          # Stage the generated PDF
+          git add report/build/MSc_group_j.pdf
+
+          # Only commit if there are changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Generate report in build folder"
+            # Rebase any new remote changes to avoid conflicts
+            git pull --rebase origin ${{ github.head_ref }}
+            # Push back to the PR branch
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            echo "No changes to commit."
+          fi
